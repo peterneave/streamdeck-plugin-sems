@@ -26,7 +26,10 @@
 		{
 			"Icon": "actions/template/assets/actionimage",
 			"Name": "Example Action",
-			"Controllers": ["Keypad", "Encoder"],
+			"Controllers": [
+				"Keypad",
+				"Encoder"
+			],
 			"Encoder": {
 				"layout": "$B1",
 				"TriggerDescription": {
@@ -42,7 +45,7 @@
 				}
 			],
 			"Tooltip": "This is an example tooltip",
-			"UUID": "com.elgato.template.action",
+			"UUID": "dev.neave.sems.action",
 			"PropertyInspectorPath": "actions/template/property-inspector/inspector.html"
 		}
 	]

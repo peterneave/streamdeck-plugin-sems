@@ -32,9 +32,9 @@ A short guide to help you get started quickly.
 
 Rename the folder as well as any references.
 
-`com.elgato.template.sdPlugin` with `my.domain.plugin-name.sdPlugin`
+`dev.neave.sems.sdPlugin` with `my.domain.plugin-name.sdPlugin`
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > When sym-linking the plugin, the folder name must end with `.sdPlugin`.
 
 ### Get the latest library
@@ -43,18 +43,18 @@ You can either clone the javascript library or add it as a submodule to your rep
 
 #### Clone
 
-```git clone https://github.com/elgatosf/streamdeck-javascript-sdk src/my.domain.plugin-name/libs```
+```git clone https://github.com/elgatosf/streamdeck-javascript-sdk src/dev.neave.sems.sdPlugin/libs```
 
 #### Add Submodule
 
-```git submodule add https://github.com/elgatosf/streamdeck-javascript-sdk src/my.domain.plugin-name/libs```
+```git submodule add https://github.com/elgatosf/streamdeck-javascript-sdk src/dev.neave.sems.sdPlugin/libs```
 
 ### Start Coding
 
 You can get started in app.js!
 
 ```javascript
-const myAction = new Action('com.elgato.template.action');
+const myAction = new Action('dev.neave.sems.action');
 
 /**
  * The first event fired when Stream Deck starts
