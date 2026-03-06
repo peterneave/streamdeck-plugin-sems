@@ -6,6 +6,18 @@ A Stream Deck plugin that displays live solar generation data from GoodWe invert
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Stream Deck SDK](https://img.shields.io/badge/Stream%20Deck%20SDK-3-orange)
 
+## Images
+
+| Gauge with Numbers                                       | Gauge                           | Numbers                             |
+| -------------------------------------------------------- | ------------------------------- | ----------------------------------- |
+| ![Gauge with Numbers](docs/images/gague_with_number.png) | ![Gauge](docs/images/gauge.png) | ![Numbers](docs/images/numbers.png) |
+
+
+
+
+
+![Settings](docs/images/settings.png)
+
 ## Features
 
 - **Live Power Output**: Real-time display of current AC power generation (watts)
