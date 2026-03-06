@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head lang="en">
+    <title>SEMS Property Inspector</title>
+    <meta charset="utf-8" />
+    <script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <main class="pi">
+        <section class="panel">
+            <h1>SEMS Settings</h1>
+
+            <sdpi-item label="Account Email">
+                <sdpi-textfield setting="account" type="email" placeholder="your.email@example.com"></sdpi-textfield>
+            </sdpi-item>
+
+            <sdpi-item label="Password">
+                <sdpi-password setting="password"></sdpi-password>
+            </sdpi-item>
+
+            <sdpi-item label="Power Station ID">
+                <sdpi-textfield setting="powerStationId" placeholder="Station ID from SEMS Portal"></sdpi-textfield>
+            </sdpi-item>
+
+            <sdpi-item label="Refresh Interval">
+                <sdpi-select setting="refreshInterval">
+                    <option value="10m">10 minutes</option>
+                    <option value="30m">30 minutes</option>
+                    <option value="60m">1 hour</option>
+                    <option value="onPush">On Push (key press)</option>
+                </sdpi-select>
+            </sdpi-item>
+
+            <sdpi-item label="Display Mode">
+                <sdpi-select setting="displayMode">
+                    <option value="gaugeOnly">Gauge only</option>
+                    <option value="gaugeWithNumber">Gauge + number</option>
+                    <option value="numberOnly">Number only</option>
+                </sdpi-select>
+            </sdpi-item>
+
+            <div class="row">
+                <button id="testConnection" type="button">Test Connection</button>
+                <span id="statusText" class="status">Idle</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Latest Data</h2>
+            <dl class="kv">
+                <div>
+                    <dt>Current</dt>
+                    <dd id="currentKw">--</dd>
+                </div>
+                <div>
+                    <dt>Daily</dt>
+                    <dd id="dailyKwh">--</dd>
+                </div>
+                <div>
+                    <dt>Total</dt>
+                    <dd id="totalKwh">--</dd>
+                </div>
+                <div>
+                    <dt>Capacity</dt>
+                    <dd id="capacity">--</dd>
+                </div>
+                <div>
+                    <dt>Updated</dt>
+                    <dd id="updated">--</dd>
+                </div>
+            </dl>
+        </section>
+    </main>
+
+    <script src="sems-solar-output.js"></script>
+</body>
+
+</html>

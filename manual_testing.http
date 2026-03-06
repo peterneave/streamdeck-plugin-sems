@@ -1,0 +1,31 @@
+# This file is used for testing API calls with the SEMS portal. It is not part of the plugin code.
+# To use, install the REST Client extension (https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+# in VS Code and run the requests in this file. Make sure to set your credentials and station ID in the .env file.
+
+# .env file content (do not commit this file to version control):
+#
+# ACCOUNT=first.last@example.com
+# PASSWORD=your_secure_password
+# STATION_ID=3b0039a3-4afd-4031-943c-e2d69fc32788
+#
+# Note: The above credentials are placeholders. Replace them with your actual SEMS portal account email, password, and station ID.
+
+### Authentication
+# @name auth
+@account={{$dotenv ACCOUNT}}
+@pwd={{$dotenv PASSWORD}}
+
+POST https://www.semsportal.com/api/v1/Common/CrossLogin
+Content-Type: application/json
+Token: {"version":"v3.4.3","client":"android","language":"en"}
+
+{"account":"{{account}}","pwd":"{{pwd}}"}
+
+### Get Station Data
+@powerStationId={{$dotenv STATION_ID}}
+
+POST {{auth.response.body.api}}v3/PowerStation/GetMonitorDetailByPowerstationId
+Content-Type: application/json
+Token: {"version":"v3.4.3","client":"android","language":"en","timestamp":"{{auth.response.body.data.timestamp}}","uid":"6fcb2b40-8e3d-4b39-b1b8-ca2a53f786e1","token":"{{auth.response.body.data.token}}"}
+
+{"powerStationId":"{{powerStationId}}"}

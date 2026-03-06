@@ -1,0 +1,105 @@
+:root {
+  color-scheme: dark;
+  /* Use Stream Deck's native theme colors */
+  --text: rgba(255, 255, 255, 0.9);
+  --muted: rgba(255, 255, 255, 0.6);
+  --accent: #2eaadc;
+  --danger: #ff5e5e;
+  --ok: #4fd78a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 12px;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: transparent;
+  color: var(--text);
+}
+
+.pi {
+  display: grid;
+  gap: 10px;
+}
+
+.panel {
+  background: transparent;
+  border: none;
+  padding: 10px;
+}
+
+h1,
+h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+button {
+  width: 100%;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), #2f7de1);
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+button:hover {
+  filter: brightness(1.08);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.status {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  padding: 4px;
+}
+
+.status.ok {
+  color: var(--ok);
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.kv {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.kv div {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px;
+}
+
+dt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+dd {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text);
+}
