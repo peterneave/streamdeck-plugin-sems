@@ -1,0 +1,23 @@
+{
+    "scripts": {
+        "build": "rollup -c",
+        "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart dev.neave.sems.solar.monitoring\"",
+        "pack": "streamdeck pack dev.neave.sems.solar.monitoring.sdPlugin"
+    },
+    "type": "module",
+    "devDependencies": {
+        "@elgato/cli": "^1.7.1",
+        "@rollup/plugin-commonjs": "^29.0.1",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-terser": "^1.0.0",
+        "@rollup/plugin-typescript": "^12.1.0",
+        "@tsconfig/node20": "^20.1.2",
+        "@types/node": "~25.3.5",
+        "rollup": "^4.0.2",
+        "tslib": "^2.6.2",
+        "typescript": "^5.2.2"
+    },
+    "dependencies": {
+        "@elgato/streamdeck": "^2.0.0"
+    }
+}
