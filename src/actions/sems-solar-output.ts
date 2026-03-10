@@ -1,4 +1,4 @@
-import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SendToPluginEvent } from "@elgato/streamdeck";
+import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SendToPluginEvent, KeyAction } from "@elgato/streamdeck";
 
 // SEMS API constants
 const BASE_TOKEN = {
@@ -526,14 +526,11 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
     }
 
     private async sendToPI(id: string, payload: any): Promise<void> {
-        const action = streamDeck.actions.getActionById(id);
-        if (!action) {
-            streamDeck.logger.warn(`Cannot send to property inspector: action ${id} not found`);
-            return;
-        }
-
         try {
-            await action.sendToPropertyInspector(payload);
+            await streamDeck.ui.sendToPropertyInspector({
+                ...payload,
+                actionId: id
+            });
         } catch (error) {
             streamDeck.logger.error(`Failed to send to property inspector: ${this.stringifyError(error)}`);
         }
