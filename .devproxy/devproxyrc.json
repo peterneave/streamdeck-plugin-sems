@@ -1,0 +1,22 @@
+{
+	"$schema": "https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v2.2.0/rc.schema.json",
+	"plugins": [
+		{
+			"name": "MockResponsePlugin",
+			"enabled": true,
+			"pluginPath": "~appFolder/plugins/DevProxy.Plugins.dll",
+			"configSection": "mockResponsePlugin"
+		}
+	],
+	"urlsToWatch": [
+		"https://www.semsportal.com/api/*",
+		"https://au.semsportal.com/api/*"
+	],
+	"mockResponsePlugin": {
+		"$schema": "https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v2.2.0/mockresponseplugin.schema.json",
+		"mocksFile": "mocks.json"
+	},
+	"logLevel": "information",
+	"newVersionNotification": "stable",
+	"showSkipMessages": true
+}
