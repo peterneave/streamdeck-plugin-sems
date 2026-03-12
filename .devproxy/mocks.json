@@ -1,0 +1,67 @@
+{
+    "$schema": "https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v2.2.0/mockresponseplugin.mocksfile.schema.json",
+    "mocks": [
+        {
+            "request": {
+                "url": "https://www.semsportal.com/api/v1/Common/CrossLogin",
+                "method": "POST"
+            },
+            "response": {
+                "body": {
+                    "hasError": false,
+                    "code": 0,
+                    "msg": "Successful",
+                    "data": {
+                        "uid": "05a9fffdb1ea4db890e40e80bdfb1ca8",
+                        "timestamp": 1773111415024,
+                        "token": "3b7e3475a31443e59c0d4792fedc6ac2"
+                    },
+                    "api": "https://au.semsportal.com/api/"
+                },
+                "headers": [
+                    {
+                        "name": "content-type",
+                        "value": "application/json;"
+                    }
+                ]
+            }
+        },
+        {
+            "request": {
+                "url": "https://au.semsportal.com/api/v3/PowerStation/GetMonitorDetailByPowerstationId",
+                "method": "POST"
+            },
+            "response": {
+                "body": {
+                    "data": {
+                        "info": {
+                            "powerstation_id": "d2ebed3e-9bf6-4771-9dc5-6d46b8ccfaa9",
+                            "capacity": 6.23
+                        },
+                        "kpi": {
+                            "month_generation": 200.0,
+                            "pac": 1000.0,
+                            "power": 15.0,
+                            "total_power": 50000.0,
+                            "day_income": 10.0,
+                            "total_income": 8000.00,
+                            "yield_rate": 0.22,
+                            "currency": "AUD"
+                        },
+                        "inverter": [
+                            {
+                                "capacity": 5.0
+                            }
+                        ]
+                    }
+                },
+                "headers": [
+                    {
+                        "name": "content-type",
+                        "value": "application/json;"
+                    }
+                ]
+            }
+        }
+    ]
+}

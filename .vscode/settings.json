@@ -18,5 +18,10 @@
 		"**/.git": true,
 		"**/node_modules": true
 	},
-	"explorerExclude.backup": {}
+	"explorerExclude.backup": {},
+	"json.schemaDownload.trustedDomains": {
+		"https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v2.2.0/rc.schema.json": true,
+		"https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v2.2.0/mockresponseplugin.schema.json": true,
+		"https://raw.githubusercontent.com/dotnet/dev-proxy/main/schemas/v2.2.0/mockresponseplugin.mocksfile.schema.json": true,
+	}
 }
