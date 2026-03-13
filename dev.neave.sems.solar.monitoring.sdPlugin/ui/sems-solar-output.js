@@ -11,22 +11,50 @@ const refs = {
     updated: document.getElementById("updated")
 };
 
+function getSdkBridge() {
+    if (globalThis.$SD && typeof globalThis.$SD.sendToPlugin === "function" && typeof globalThis.$SD.on === "function") {
+        return {
+            sendToPlugin: (payload) => globalThis.$SD.sendToPlugin(payload),
+            onSendToPropertyInspector: (handler) => globalThis.$SD.on("sendToPropertyInspector", handler)
+        };
+    }
+
+    const streamDeckClient = globalThis.SDPIComponents?.streamDeckClient;
+    if (streamDeckClient && typeof streamDeckClient.send === "function" && streamDeckClient.sendToPropertyInspector?.subscribe) {
+        return {
+            sendToPlugin: (payload) => streamDeckClient.send("sendToPlugin", payload),
+            onSendToPropertyInspector: (handler) => streamDeckClient.sendToPropertyInspector.subscribe(handler)
+        };
+    }
+
+    return null;
+}
+
+const sdkBridge = getSdkBridge();
+
 // Wait for DOM to load
-window.addEventListener("load", () => {
+globalThis.addEventListener("load", () => {
+    if (!sdkBridge) {
+        setStatus("Stream Deck SDK bridge not available.", "error");
+        return;
+    }
+
     // Bind test connection button
     refs.testConnection.addEventListener("click", () => {
         setStatus("Testing connection...", "");
-        $SD.sendToPlugin({ command: "testConnection" });
+        sdkBridge.sendToPlugin({ command: "testConnection" });
     });
 
     // Request initial telemetry from plugin
-    $SD.sendToPlugin({ command: "requestState" });
+    sdkBridge.sendToPlugin({ command: "requestState" });
 });
 
 // Handle messages from plugin
-$SD.on("sendToPropertyInspector", (event) => {
-    handlePluginMessage(event?.payload || {});
-});
+if (sdkBridge) {
+    sdkBridge.onSendToPropertyInspector((event) => {
+        handlePluginMessage(event?.payload || {});
+    });
+}
 
 function handlePluginMessage(payload) {
     if (payload.type === "connectionTestResult") {
