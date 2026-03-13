@@ -107,6 +107,12 @@ After adding the action to your Stream Deck:
 
   Automatically rebuilds on file changes and restarts the plugin in Stream Deck
 
+### VS Code Shortcuts
+
+- **Pack plugin**: Press `Ctrl+Shift+B` and run the default build task (`Build Pack`)
+- **Debug plugin**: Press `F5` to start the VS Code debugger
+- **Run a specific task**: Open Command Palette and run `Tasks: Run Task`
+
 ### Development Workflow
 
 1. **Start watch mode**:

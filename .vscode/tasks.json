@@ -1,0 +1,49 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Remove Pack",
+            "type": "shell",
+            "command": "rm",
+            "args": [
+                "-f",
+                "dev.neave.sems.solar.monitoring.streamDeckPlugin"
+            ],
+            "windows": {
+                "command": "powershell",
+                "args": [
+                    "-NoProfile",
+                    "-Command",
+                    "try { Remove-Item -Force -ErrorAction Stop \"dev.neave.sems.solar.monitoring.streamDeckPlugin\" } catch { exit 0 }"
+                ]
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "detail": "Delete the output plugin file before packing"
+        },
+        {
+            "type": "npm",
+            "script": "pack",
+            "group": {
+                "kind": "build",
+                "isDefault": true // This task will be the default build task, which can be run with Ctrl+Shift+B
+            },
+            "dependsOn": "Remove Pack",
+            "problemMatcher": [],
+            "label": "Build Pack",
+            "detail": "Pack the extension for distribution"
+        },
+        {
+            "label": "Link",
+            "type": "shell",
+            "command": "streamdeck",
+            "args": [
+                "link",
+                "dev.neave.sems.solar.monitoring.sdPlugin"
+            ],
+            "problemMatcher": [],
+            "group": "build",
+            "detail": "Link the plugin for development"
+        }
+    ]
+}
