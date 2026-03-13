@@ -1,4 +1,4 @@
-import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SendToPluginEvent, KeyAction } from "@elgato/streamdeck";
+import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SendToPluginEvent } from "@elgato/streamdeck";
 
 // SEMS API constants
 const BASE_TOKEN = {
@@ -14,6 +14,8 @@ const INTERVAL_MS: Record<string, number> = {
     "30m": 30 * 60 * 1000,
     "60m": 60 * 60 * 1000
 };
+
+const MANUAL_REFRESH_COOLDOWN_MS = 5 * 1000;
 
 const DEFAULT_SETTINGS = {
     account: "",
@@ -49,6 +51,7 @@ interface ActionState {
     error: string;
     timerId: NodeJS.Timeout | null;
     inFlight: boolean;
+    lastManualRefreshAt: number;
 }
 
 interface SemsApiResponse {
@@ -77,7 +80,8 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
             latest: null,
             error: "",
             timerId: null,
-            inFlight: false
+            inFlight: false,
+            lastManualRefreshAt: 0
         };
 
         this.states.set(ev.action.id, state);
@@ -103,15 +107,10 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
     }
 
     /**
-     * Key pressed - if "On Push" mode, refresh now
+     * Key pressed - always allow a manual refresh
      */
     override async onKeyDown(ev: KeyDownEvent<SemsSettings>): Promise<void> {
-        const state = this.getState(ev.action.id);
-        if (!state) return;
-
-        if (state.settings.refreshInterval === "onPush") {
-            await this.refreshContext(ev.action.id, "keypress");
-        }
+        await this.triggerManualRefresh(ev.action.id, "keypress");
     }
 
     /**
@@ -160,7 +159,7 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
         }
 
         if (ev.payload.command === "refreshNow") {
-            await this.refreshContext(ev.action.id, "pi");
+            await this.triggerManualRefresh(ev.action.id, "pi");
         }
     }
 
@@ -204,6 +203,20 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
         if (runImmediate || !state.latest) {
             this.refreshContext(id, "initial");
         }
+    }
+
+    private async triggerManualRefresh(id: string, source: string): Promise<void> {
+        const state = this.getState(id);
+        if (!state) return;
+
+        // Ignore repeated manual refresh requests during cooldown.
+        const now = Date.now();
+        if (now - state.lastManualRefreshAt < MANUAL_REFRESH_COOLDOWN_MS) {
+            return;
+        }
+
+        state.lastManualRefreshAt = now;
+        await this.refreshContext(id, source);
     }
 
     private async refreshContext(id: string, source: string): Promise<void> {
