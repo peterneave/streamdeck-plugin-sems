@@ -2,7 +2,7 @@
 
 A Stream Deck plugin that displays live solar generation data from GoodWe inverters via the [SEMS Portal](https://www.semsportal.com) REST API. Monitor your solar PV system's real-time output on your Elgato Stream Deck.
 
-![Version](https://img.shields.io/badge/version-0.1.1-blue)
+![Version](https://img.shields.io/badge/version-0.1.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Stream Deck SDK](https://img.shields.io/badge/Stream%20Deck%20SDK-3-orange)
 
