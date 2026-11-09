@@ -2,41 +2,27 @@
 
 ## Project Overview
 
-This is a **Stream Deck plugin** that displays live solar generation data from a **GoodWe inverter** via the [SEMS Portal](https://www.semsportal.com) REST API. The plugin lets users see real-time PV output, daily/total generation, and earnings on their Elgato Stream Deck.
+This is a **Stream Deck plugin** that displays live solar generation data from a **GoodWe inverter** via the [SEMS+](https://semsplus.goodwe.com) API. The plugin lets users see real-time PV output, daily/total generation, and earnings on their Elgato Stream Deck.
 
-## SEMS Portal API
+## SEMS+ API
 
-Authentication is a two-step process:
+GoodWe migrated from SEMS Portal to SEMS+ in 2026 and retired the legacy `v3/PowerStation/GetMonitorDetailByPowerstationId` endpoint. The SEMS+ API is undocumented; this flow follows community reverse-engineering (`bueste/ioBroker.goodwe-sems` `lib/semsApi.js`, `TimSoethout/goodwe-sems-home-assistant` issue #183). All API code lives in `src/sems-api.ts`.
 
-1. **Login** — `POST https://www.semsportal.com/api/v1/Common/CrossLogin`
-   - Header: `Token: {"version":"v3.4.3","client":"android","language":"en"}`
-   - Body: `{"account": "<email>", "pwd": "<password>"}`
-   - Returns: `uid`, `token`, `timestamp`, and a region-specific `api` base URL (e.g. `https://au.semsportal.com/api/`)
+1. **Login** — `POST https://semsplus.goodwe.com/web/sems/sems-user/api/v1/auth/cross-login`
+   - Headers: browser `User-Agent`, `Origin`/`Referer` of the login host, `token: {"uid":"","timestamp":0,"token":"","client":"semsPlusWeb","version":"","language":"en"}`, `x-signature`
+   - Body: `{"account": "<email>", "pwd": base64(md5_hex(password)), "agreement": 1, "isChinese": false, "isLocal": false}`
+   - Success: `code` is `"00000"` (or `0`). Returns `data.uid`, `data.token`, `data.timestamp`, `data.region` and a region-specific gateway `data.api` (e.g. `https://eu-gateway.semsportal.com/web/sems`)
+   - Do not retry the login against multiple regional hosts; it can look like credential stuffing and lock the account.
 
-2. **Get station data** — `POST <api>/v3/PowerStation/GetMonitorDetailByPowerstationId`
-   - Header: `Token: {"version":"v3.4.3","client":"android","language":"en","timestamp":"<ts>","uid":"<uid>","token":"<token>"}`
-   - Body: `{"powerStationId": "<id>"}`
+2. **Gateway calls** — against the gateway from login, with headers `User-Agent: PVMaster/2.9.5 (iPhone; iOS 17.5; Scale/3.00)`, `token: {uid, timestamp, token, client:"semsPlusWeb", version:"", language:"en", api, region}` and `x-signature = base64(sha256_hex("<ts>@<uid>@<token>") + "@<ts>")` (ts = epoch ms, fresh per call)
+   - `POST /sems-plant/api/portal/stations/basic/info?stationId=<id>`: `name`, `pvCapacity` (kW, falls back to `installedPower`)
+   - `GET /sems-plant/api/stations/device/all-status?stationId=<id>`: `deviceDetailList[].deviceType` and `statusDetailList[].detailMap` (keys are device serial numbers)
+   - `GET /sems-plant/api/equipments/<sn>/telemetry?deviceType=<type>&pwId=<id>`: factors `{code, data}`; `pAc` is current AC power in **kW**
+   - `GET /sems-plant/api/equipments/<sn>/telecounting?deviceType=<type>&pwId=<id>`: `proPvStatsToday` and `proPvStatsTotal` (kWh)
 
-### Key response fields (`data`)
+The session is cached and reused across refreshes; on a non-success gateway response the client logs in again once and retries. `GY0429` means rate limited.
 
-| Path                      | Description                                  |
-| ------------------------- | -------------------------------------------- |
-| `kpi.pac`                 | Current AC output power (W)                  |
-| `kpi.power`               | Energy generated today (kWh)                 |
-| `kpi.total_power`         | Lifetime energy generated (kWh)              |
-| `kpi.day_income`          | Earnings today (currency in `kpi.currency`)  |
-| `kpi.total_income`        | Lifetime earnings                            |
-| `inverter[].capacity`     | Per-inverter capacity (W)                    |
-| `inverter[].out_pac`      | Per-inverter AC output (W)                   |
-| `inverter[].eday`         | Per-inverter daily generation (kWh)          |
-| `inverter[].etotal`       | Per-inverter lifetime generation (kWh)       |
-| `inverter[].tempperature` | Inverter temperature (°C) — note typo in API |
-| `inverter[].status`       | `1` = Normal, other values = fault/offline   |
-| `hjgx.co2`                | CO₂ offset (tonnes)                          |
-
-The `api` base URL returned at login is **region-specific** (e.g. `au.semsportal.com` for Australia) — always use the URL from the login response, not a hardcoded one.
-
-The output of the solar system is contained by the capacity of the inverter(s). If you have a 5kW system with a 3kW inverter, the maximum output will be ~3kW, even if the solar panels could produce more. To get the true potential output, you can sum the `capacity` of all inverters.
+Use `node scripts/sems-probe.mjs` (reads `ACCOUNT`, `PASSWORD`, `STATION_ID` from `.env`) to inspect live responses.
 
 ## Secrets & Credentials
 

@@ -2,7 +2,9 @@
     "scripts": {
         "build": "rollup -c",
         "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart dev.neave.sems.solar.monitoring\"",
-        "pack": "streamdeck pack dev.neave.sems.solar.monitoring.sdPlugin"
+        "pack": "streamdeck pack dev.neave.sems.solar.monitoring.sdPlugin",
+        "link": "streamdeck link dev.neave.sems.solar.monitoring.sdPlugin",
+        "unlink": "streamdeck unlink dev.neave.sems.solar.monitoring"
     },
     "type": "module",
     "devDependencies": {

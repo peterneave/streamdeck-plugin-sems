@@ -2,7 +2,7 @@
 
 A Stream Deck plugin that displays live solar generation data from GoodWe inverters via the [SEMS Portal](https://www.semsportal.com) REST API. Monitor your solar PV system's real-time output on your Elgato Stream Deck.
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Stream Deck SDK](https://img.shields.io/badge/Stream%20Deck%20SDK-3-orange)
 
@@ -167,12 +167,17 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 ## API Reference
 
-The plugin uses the GoodWe SEMS Portal API v3:
+The plugin uses the GoodWe SEMS+ API (the legacy SEMS Portal `GetMonitorDetailByPowerstationId` endpoint has been retired). The API is undocumented; the flow follows community reverse-engineering and may change.
 
 ### Authentication Flow
 
-1. **Login**: `POST https://www.semsportal.com/api/v1/Common/CrossLogin`
-2. **Get Data**: `POST {regionUrl}/v3/PowerStation/GetMonitorDetailByPowerstationId`
+1. **Login**: `POST https://semsplus.goodwe.com/web/sems/sems-user/api/v1/auth/cross-login` (password sent as base64 of its MD5 hex digest). Returns a session and a region-specific gateway URL.
+2. **Get Data** (signed with an `x-signature` header, against the returned gateway):
+   - `POST {gateway}/sems-plant/api/portal/stations/basic/info?stationId=...`
+   - `GET {gateway}/sems-plant/api/stations/device/all-status?stationId=...`
+   - `GET {gateway}/sems-plant/api/equipments/{sn}/telemetry` and `.../telecounting` per inverter
+
+To probe the API with your own account, put `ACCOUNT`, `PASSWORD` and `STATION_ID` in `.env` and run `node scripts/sems-probe.mjs`.
 
 See `.github/copilot-instructions.md` for detailed API documentation.
 

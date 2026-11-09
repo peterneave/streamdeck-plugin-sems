@@ -1,13 +1,5 @@
 import streamDeck, { action, KeyDownEvent, SingletonAction, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SendToPluginEvent } from "@elgato/streamdeck";
-
-// SEMS API constants
-const BASE_TOKEN = {
-    version: "v3.4.3",
-    client: "android",
-    language: "en"
-};
-
-const LOGIN_URL = "https://www.semsportal.com/api/v1/Common/CrossLogin";
+import { SemsClient, SemsTelemetry } from "../sems-api";
 
 const INTERVAL_MS: Record<string, number> = {
     "10m": 10 * 60 * 1000,
@@ -35,16 +27,6 @@ interface SemsSettings {
     [key: string]: any;  // Index signature for JsonObject compatibility
 }
 
-interface SemsTelemetry {
-    stationName: string;
-    timestamp: string;
-    currentW: number;
-    currentKw: number;
-    dailyKwh: number;
-    totalKwh: number;
-    capacityKw: number;
-}
-
 interface ActionState {
     settings: SemsSettings;
     latest: SemsTelemetry | null;
@@ -52,14 +34,7 @@ interface ActionState {
     timerId: NodeJS.Timeout | null;
     inFlight: boolean;
     lastManualRefreshAt: number;
-}
-
-interface SemsApiResponse {
-    hasError?: boolean;
-    code?: number | string;
-    msg?: string;
-    api?: string;
-    data?: any;
+    client: SemsClient | null;
 }
 
 /**
@@ -81,7 +56,8 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
             error: "",
             timerId: null,
             inFlight: false,
-            lastManualRefreshAt: 0
+            lastManualRefreshAt: 0,
+            client: null
         };
 
         this.states.set(ev.action.id, state);
@@ -140,7 +116,7 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
             const state = this.getState(ev.action.id);
             if (!state) return;
 
-            const result = await this.fetchSemsData(state.settings);
+            const result = await this.fetchSemsData(state);
 
             if (result.ok) {
                 await this.sendToPI(ev.action.id, {
@@ -238,7 +214,7 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
         state.inFlight = true;
 
         try {
-            const result = await this.fetchSemsData(state.settings);
+            const result = await this.fetchSemsData(state);
 
             if (!result.ok) {
                 state.latest = null;
@@ -272,99 +248,23 @@ export class SemsSolarOutputAction extends SingletonAction<SemsSettings> {
         return Boolean(settings.account && settings.password && settings.powerStationId);
     }
 
-    private async fetchSemsData(settings: SemsSettings): Promise<{ ok: boolean; data?: SemsTelemetry; error?: string }> {
+    private async fetchSemsData(state: ActionState): Promise<{ ok: boolean; data?: SemsTelemetry; error?: string }> {
+        const { account, password, powerStationId } = state.settings;
+
+        // Reuse the client (and its cached session) until the credentials change.
+        if (!state.client || !state.client.matches(account, password)) {
+            state.client = new SemsClient(account, password);
+        }
+
         try {
-            // Step 1: Login
-            const loginResponse = await fetch(LOGIN_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Token: JSON.stringify(BASE_TOKEN)
-                },
-                body: JSON.stringify({
-                    account: settings.account,
-                    pwd: settings.password
-                })
-            });
-
-            const loginJson = await loginResponse.json() as SemsApiResponse;
-            if (!loginResponse.ok) {
-                return { ok: false, error: `Login failed with HTTP ${loginResponse.status}.` };
-            }
-
-            if (loginJson.hasError || (loginJson.code !== 0 && loginJson.code !== "0")) {
-                return { ok: false, error: loginJson.msg || "SEMS login failed." };
-            }
-
-            const apiBase = loginJson.api;
-            const loginData = loginJson.data || {};
-
-            if (!apiBase || !loginData.uid || !loginData.token || !loginData.timestamp) {
-                return { ok: false, error: "SEMS login response missing API token details." };
-            }
-
-            // Step 2: Get station data
-            const monitorUrl = `${String(apiBase).replace(/\/$/, "")}/v3/PowerStation/GetMonitorDetailByPowerstationId`;
-            const tokenHeader = JSON.stringify({
-                ...BASE_TOKEN,
-                timestamp: String(loginData.timestamp),
-                uid: loginData.uid,
-                token: loginData.token
-            });
-
-            const monitorResponse = await fetch(monitorUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Token: tokenHeader
-                },
-                body: JSON.stringify({
-                    powerStationId: settings.powerStationId
-                })
-            });
-
-            const monitorJson = await monitorResponse.json() as SemsApiResponse;
-            if (!monitorResponse.ok) {
-                return { ok: false, error: `Monitor request failed with HTTP ${monitorResponse.status}.` };
-            }
-
-            if (monitorJson.hasError || (monitorJson.code !== 0 && monitorJson.code !== "0")) {
-                return { ok: false, error: monitorJson.msg || "SEMS monitor request failed." };
-            }
-
-            const normalized = this.normalizeSemsPayload(monitorJson.data);
-            return { ok: true, data: normalized };
+            const data = await state.client.getTelemetry(powerStationId);
+            return { ok: true, data };
         } catch (error) {
             return {
                 ok: false,
                 error: `Failed to contact SEMS: ${this.stringifyError(error)}`
             };
         }
-    }
-
-    private normalizeSemsPayload(data: any): SemsTelemetry {
-        const kpi = data?.kpi || {};
-        const info = data?.info || {};
-
-        const currentW = this.toNumber(kpi.pac, 0);
-        const currentKw = currentW / 1000;
-        const dailyKwh = this.toNumber(kpi.power, 0);
-        const totalKwh = this.toNumber(kpi.total_power, 0);
-
-        // Calculate total capacity from inverters, falling back to info.capacity
-        const inverters = Array.isArray(data?.inverter) ? data.inverter : [];
-        const totalCapacityKw = inverters.reduce((sum: number, inv: any) => sum + this.toNumber(inv.capacity, 0), 0);
-        const capacityKw = totalCapacityKw > 0 ? totalCapacityKw : this.toNumber(info.capacity, 0);
-
-        return {
-            stationName: String(info.stationname || "SEMS"),
-            timestamp: String(info.time || ""),
-            currentW,
-            currentKw,
-            dailyKwh,
-            totalKwh,
-            capacityKw
-        };
     }
 
     // Rendering methods
