@@ -48,6 +48,8 @@ interface SemsResponse {
     code?: number | string;
     msg?: string;
     message?: string;
+    description?: string;
+    errorMsg?: string;
     api?: string;
     data?: any;
 }
@@ -87,7 +89,14 @@ export class SemsClient {
             const sn = encodeURIComponent(device.sn);
 
             const telemetry = flattenFactors(await this.gateway("GET", `/sems-plant/api/equipments/${sn}/telemetry?${query}`));
-            const counting = flattenFactors(await this.gateway("GET", `/sems-plant/api/equipments/${sn}/telecounting?${query}`));
+            // Telecounting (daily/total energy) currently fails with A0400 for some accounts. Current
+            // power is what the plugin displays, so treat energy counters as best-effort.
+            let counting: Record<string, any> = {};
+            try {
+                counting = flattenFactors(await this.gateway("GET", `/sems-plant/api/equipments/${sn}/telecounting?${query}`, false));
+            } catch (error) {
+                if (error instanceof SemsFatalError) throw error;
+            }
 
             currentKw += toNumber(telemetry.pAc, 0);
             dailyKwh += toNumber(counting.proPvStatsToday, 0);
@@ -111,7 +120,7 @@ export class SemsClient {
      * Signed call against the session's gateway. Re-logs in and retries once on any non-success
      * response (expired sessions are not reported with a reliable code).
      */
-    private async gateway(method: "GET" | "POST", path: string): Promise<any> {
+    private async gateway(method: "GET" | "POST", path: string, retryLogin = true): Promise<any> {
         let freshSession = false;
         if (!this.session) {
             await this.login();
@@ -121,7 +130,7 @@ export class SemsClient {
         try {
             return await this.gatewayOnce(method, path);
         } catch (error) {
-            if (error instanceof SemsFatalError || freshSession) throw error;
+            if (error instanceof SemsFatalError || freshSession || !retryLogin) throw error;
             this.session = null;
             await this.login();
             return await this.gatewayOnce(method, path);
@@ -224,11 +233,11 @@ export class SemsClient {
         }
 
         if (!response.ok) {
-            throw new Error(json.msg || json.message || `SEMS returned HTTP ${response.status}.`);
+            throw new Error(responseMessage(json) || `SEMS returned HTTP ${response.status}.`);
         }
 
         if (!isSuccess(json)) {
-            throw new Error(json.msg || json.message || `SEMS returned code ${json.code}.`);
+            throw new Error(responseMessage(json) || `SEMS returned code ${json.code}.`);
         }
 
         return json;
@@ -270,6 +279,11 @@ function signature(uid: string, token: string): string {
     const ts = Date.now();
     const digest = createHash("sha256").update(`${ts}@${uid}@${token}`, "utf8").digest("hex");
     return Buffer.from(`${digest}@${ts}`, "utf8").toString("base64");
+}
+
+/** Error bodies use `description`/`errorMsg` (e.g. code 100005), while older ones use `msg`/`message`. */
+function responseMessage(json: SemsResponse): string | undefined {
+    return json.description || json.errorMsg || json.msg || json.message;
 }
 
 function isSuccess(json: SemsResponse): boolean {
