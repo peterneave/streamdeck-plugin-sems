@@ -2,7 +2,7 @@
     "recommendations": [
         "humao.rest-client",
         "vivaxy.vscode-conventional-commits",
-        "peterschmalfeldt.explorer-exclude",
-        "garrytrinder.dev-proxy-toolkit"
+        "garrytrinder.dev-proxy-toolkit",
+        "madcatpx.explorer-exclude-manager"
     ]
 }
